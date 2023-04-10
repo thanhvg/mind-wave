@@ -191,6 +191,20 @@
          ,@body)
        (cl-return))))
 
+(cl-defmacro mind-wave--with-file-buffer-or-buffer (filename-or-buffer &rest body)
+  "Evaluate BODY in buffer with FILEPATH."
+  (declare (indent 1))
+  `(or
+    (cl-dolist (buffer (buffer-list))
+      (when-let* ((file-name (buffer-file-name buffer))
+                  (match-buffer (or (string-equal file-name ,filename-or-buffer)
+                                    (string-equal (file-truename file-name) ,filename-or-buffer))))
+        (with-current-buffer buffer
+          ,@body)
+        (cl-return t)))
+    (with-current-buffer (get-buffer ,filename-or-buffer)
+      ,@body)))
+
 (defun mind-wave-output-lang ()
   (pcase mind-wave-lang
     ("zh_CN" "Chinese")
@@ -413,7 +427,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
 
   (message "Wait ChatGPT...")
   (mind-wave-call-async "chat_ask"
-                        (buffer-file-name)
+                        (or (buffer-file-name) (buffer-name))
                         (mind-wave--encode-string (mind-wave-get-buffer-string))
                         prompt
                         ))
@@ -456,7 +470,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
   (when mind-wave-auto-update-old-chats
     (mind-wave--update-chat-buffer-to-new-version))
   (mind-wave-call-async "chat_ask"
-                        (buffer-file-name)
+                        (or (buffer-file-name) (buffer-name))
                         (mind-wave--encode-string (mind-wave-get-buffer-string))
                         ""
                         ))
@@ -847,7 +861,7 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
 (defvar-local mind-wave-is-response-p nil)
 
 (defun mind-wave-chat-ask--response (filename type answer)
-  (mind-wave--with-file-buffer filename
+  (mind-wave--with-file-buffer-or-buffer filename
     (pcase type
       ("start"
        (setq-local mind-wave-is-response-p t)
@@ -960,6 +974,21 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
     (while (re-search-forward "^------ Assistant ------\n" nil t)
       (replace-match "## > Assistant: "))))
 
+(defun mind-wave--random-string ()
+  (let ((abc "abcdefghijklmnopqrstuvwxyz"))
+    (concat
+     (char-to-string (aref abc (% (abs (random t)) (length abc))))
+     (char-to-string (aref abc (% (abs (random t)) (length abc)))))))
+
+(defun mind-wave-new-chat ()
+  (interactive)
+  (switch-to-buffer-other-window
+   (get-buffer-create (format "*mind-wave-chat-%s*" (mind-wave--random-string))))
+  (mind-wave-chat-mode)
+  (mind-wave-chat-ask-with-multiline))
+
 (provide 'mind-wave)
 
 ;;; mind-wave.el ends here
+
+
