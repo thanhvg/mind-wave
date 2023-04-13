@@ -423,7 +423,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
 
     ;; Insert prompt.
     (insert "# > User: ")
-    (insert (format "%s\n\n" prompt)))
+    (insert (format "%s\n" prompt)))
 
   (message "Wait ChatGPT...")
   (mind-wave-call-async "chat_ask"
@@ -876,7 +876,7 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
       ("end"
        (save-excursion
          (goto-char (point-max))
-         (insert "\n\n"))
+         (insert "\n"))
        (when mind-wave-auto-change-title
          (mind-wave-chat-parse-title nil))
 
@@ -942,7 +942,7 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
      (with-current-buffer (get-buffer-create buffername)
        (save-excursion
          (goto-char (point-max))
-         (insert "\n\n")))
+         (insert "\n")))
 
      (run-with-timer 1 nil (lambda() (setq-local mind-wave-is-response-p nil)))
      (message end-message)
