@@ -180,6 +180,8 @@
 
 (defvar mind-wave-server-port nil)
 
+(defvar mind-wave--buffer-count 0)
+
 (cl-defmacro mind-wave--with-file-buffer (filename &rest body)
   "Evaluate BODY in buffer with FILEPATH."
   (declare (indent 1))
@@ -192,7 +194,7 @@
        (cl-return))))
 
 (cl-defmacro mind-wave--with-file-buffer-or-buffer (filename-or-buffer &rest body)
-  "Evaluate BODY in buffer with FILEPATH."
+  "Evaluate BODY with FILENAME-OR-BUFFER as `current-buffer'."
   (declare (indent 1))
   `(or
     (cl-dolist (buffer (buffer-list))
@@ -974,16 +976,10 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
     (while (re-search-forward "^------ Assistant ------\n" nil t)
       (replace-match "## > Assistant: "))))
 
-(defun mind-wave--random-string ()
-  (let ((abc "abcdefghijklmnopqrstuvwxyz"))
-    (concat
-     (char-to-string (aref abc (% (abs (random t)) (length abc))))
-     (char-to-string (aref abc (% (abs (random t)) (length abc)))))))
-
 (defun mind-wave-new-chat ()
   (interactive)
   (switch-to-buffer-other-window
-   (get-buffer-create (format "*mind-wave-chat-%s*" (mind-wave--random-string))))
+   (get-buffer-create (format "*mind-wave-chat-%s*" (cl-incf mind-wave--buffer-count))))
   (mind-wave-chat-mode)
   (mind-wave-chat-ask-with-multiline))
 
