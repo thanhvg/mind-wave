@@ -18,7 +18,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=api_key)
 import queue
 import threading
 import traceback
@@ -59,7 +61,6 @@ class MindWave:
         # Get API key.
         api_key = self.chat_get_api_key()
         if api_key is not None:
-            openai.api_key = api_key
 
         openai.api_base, openai.api_type, openai.api_version = get_emacs_vars(["mind-wave-api-base", "mind-wave-api-type", "mind-wave-api-version"])
 
@@ -113,13 +114,10 @@ class MindWave:
     @catch_exception
     def send_completion_request(self, messages, model="gpt-3.5-turbo"):
         if openai.api_type == 'azure':
-            response = openai.ChatCompletion.create(
-                engine = model,
-                messages = messages)
+            response = client.chat.completions.create(engine = model, messages = messages)
         else:
-            response = openai.ChatCompletion.create(
-                model = model,
-                messages = messages)
+            response = client.chat.completions.create(model = model,
+            messages = messages)
 
         result = ''
         for choice in response.choices:
@@ -130,17 +128,15 @@ class MindWave:
     @catch_exception
     def send_stream_request(self, messages, callback, model="gpt-3.5-turbo"):
         if openai.api_type == 'azure':
-            response = openai.ChatCompletion.create(
-                engine = model,
-                messages = messages,
-                temperature=0,
-                stream=True)
+            response = client.chat.completions.create(engine = model,
+            messages = messages,
+            temperature=0,
+            stream=True)
         else:
-            response = openai.ChatCompletion.create(
-                model = model,
-                messages = messages,
-                temperature=0,
-                stream=True)
+            response = client.chat.completions.create(model = model,
+            messages = messages,
+            temperature=0,
+            stream=True)
 
         for chunk in response:
             (result_type, result_content) = self.get_chunk_result(chunk)
@@ -352,17 +348,15 @@ class MindWave:
 
         try:
             if openai.api_type == 'azure':
-                response = openai.ChatCompletion.create(
-                    engine = "gpt-3.5-turbo",
-                    messages = messages,
-                    temperature=0,
-                    stream=True)
+                response = client.chat.completions.create(engine = "gpt-3.5-turbo",
+                messages = messages,
+                temperature=0,
+                stream=True)
             else:
-                response = openai.ChatCompletion.create(
-                    model = "gpt-3.5-turbo",
-                    messages = messages,
-                    temperature=0,
-                    stream=True)
+                response = client.chat.completions.create(model = "gpt-3.5-turbo",
+                messages = messages,
+                temperature=0,
+                stream=True)
 
             for chunk in response:
                 (result_type, result_content) = self.get_chunk_result(chunk)

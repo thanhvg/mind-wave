@@ -11,5 +11,26 @@
 #+end_src
 
 #+RESULTS:
+| lambda  | nil | (setq-local jit-lock-defer-time 0.5) |                                                      |                                                  |
+| closure | (t) | nil                                  | (set (make-local-variable 'jit-lock-defer-time) 0.5) | (remove-from-invisibility-spec 'markdown-markup) |
 
 * new command to start a new chat
+* deprecate
+[Mind-Wave] Traceback (most recent call last):
+  File "/home/gvuong/.emacs.d/elpa/29.2/develop/mind-wave-20231025.125257/mind_wave.py", line 35, in wrapper
+    return func(*args, **kwargs)
+  File "/home/gvuong/.emacs.d/elpa/29.2/develop/mind-wave-20231025.125257/mind_wave.py", line 139, in send_stream_request
+    response = openai.ChatCompletion.create(
+  File "/home/gvuong/.local/lib/python3.10/site-packages/openai/lib/_old_api.py", line 39, in __call__
+    raise APIRemovedInV1(symbol=self._symbol)
+openai.lib._old_api.APIRemovedInV1: 
+
+You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run ‘openai migrate‘ to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. ‘pip install openai==0.28‘
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+ [2 times]
+windmove-do-window-select: Minibuffer is inactive
