@@ -983,6 +983,15 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
   (mind-wave-chat-mode)
   (mind-wave-chat-ask-with-multiline))
 
+(defun mind-wave-chat-anywhere (chat-message)
+  "Prompt for a CHAT-MESSAGE and start a new chat with it."
+  (interactive "sChat: ")
+  (message "_")
+  (switch-to-buffer-other-window
+   (get-buffer-create (format "*mind-wave-chat-%s*" (cl-incf mind-wave--buffer-count))))
+  (mind-wave-chat-mode)
+  (mind-wave-chat-ask-with-message chat-message))
+
 (provide 'mind-wave)
 
 ;;; mind-wave.el ends here

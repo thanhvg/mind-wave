@@ -34,3 +34,5 @@ Alternatively, you can pin your installation to the old version, e.g. ‘pip ins
 A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
  [2 times]
 windmove-do-window-select: Minibuffer is inactive
+* new command similar to howdoyou-query
+take the input from the prompt and then opens the answer side by side
