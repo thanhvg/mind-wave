@@ -823,20 +823,19 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
 (defvar mind-wave-summary-template (format "Your output should use the following template:
 ### Summary
 ### Facts
-- [Emoji] Bulletpoint
+- Bulletpoint
 
-Your task is to summarize the text I give you in up to seven concise  bulletpoints and start with a short, high-quality summary. Pick a suitable emoji for every bullet point. Your response should be in %s. Use the following text:"
+Your task is to summarize the text I give you in up to seven concise  bulletpoints and start with a short, high-quality summary. Your response should be in %s. Use the following text:"
                                            (mind-wave-output-lang)
                                            ))
 
 (defvar mind-wave-window-configuration-before-split nil)
 
-(defun mind-wave-summary-video ()
-  (interactive)
-  (let ((video-id (if eaf--buffer-url
-                      (cadr (split-string eaf--buffer-url "="))
-                    (read-string "YouTube Video ID: "))))
-
+(defun mind-wave-summary-video (url-or-id)
+  (interactive "sYouTube Video ID or Url: ")
+  (let ((video-id (if (string-match-p "^https://" url-or-id)
+                      (cadr (split-string url-or-id "="))
+                    url-or-id)))
     (mind-wave-call-async "summary_video"
                           (buffer-name)
                           video-id
@@ -847,9 +846,7 @@ Your task is to summarize the text I give you in up to seven concise  bulletpoin
 
 (defun mind-wave-summary-web ()
   (interactive)
-  (let ((url (if eaf--buffer-url
-                 eaf--buffer-url
-               (read-string "Web URL: "))))
+  (let ((url (read-string "Web URL: ")))
 
     (message "Parse web content...")
     (mind-wave-call-async "summary_web"
