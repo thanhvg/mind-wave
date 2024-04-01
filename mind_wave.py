@@ -18,17 +18,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from openai import OpenAI
 
-client = OpenAI(api_key=api_key)
-import queue
-import threading
-import traceback
-import os
-import sys
+
 from epc.server import ThreadingEPCServer
 from functools import wraps
+from openai import OpenAI
+from openai.types.chat.chat_completion_chunk import ChoiceDelta
+from sexpdata import String
 from utils import (get_command_result, get_emacs_var, get_emacs_vars, init_epc_client, eval_in_emacs, logger, close_epc_client, message_emacs, string_to_base64, decode_text)
+
+import os
+import queue
+import sys
+import threading
+import traceback
+import logging
 
 def catch_exception(func):
     @wraps(func)
@@ -48,23 +52,41 @@ def threaded(func):
             args[0].thread_queue.append(thread)
     return wrapper
 
+class ApiSettings:
+    api_key: String
+    api_base: bool | None
+    api_version: bool | None
+    api_type: bool | None
+
+    def __init__(self, api_key, api_base=None, api_version=None, api_type=None) -> None:
+        self.api_key = api_key
+        self.api_base = api_base
+        self.api_version = api_version
+        self.api_type = api_type
+
 class MindWave:
+    settings: ApiSettings
+    client: OpenAI
+
     def __init__(self, args):
         # Init EPC client port.
         init_epc_client(int(args[0]))
 
         # Build EPC server.
         self.server = ThreadingEPCServer(('127.0.0.1', 0), log_traceback=True)
-        # self.server.logger.setLevel(logging.DEBUG)
+        self.server.logger.setLevel(logging.DEBUG)
         self.server.allow_reuse_address = True
 
         # Get API key.
         api_key = self.chat_get_api_key()
-        if api_key is not None:
+        self.settings = ApiSettings(api_key)
 
-        openai.api_base, openai.api_type, openai.api_version = get_emacs_vars(["mind-wave-api-base", "mind-wave-api-type", "mind-wave-api-version"])
+        if api_key is not None:
+            self.settings.api_base, self.settings.api_type, self.settings.api_version = get_emacs_vars(["mind-wave-api-base", "mind-wave-api-type", "mind-wave-api-version"])
 
         self.server.register_instance(self)  # register instance functions let elisp side call
+
+        self.client = OpenAI(api_key=self.settings.api_key)
 
         # Start EPC server with sub-thread, avoid block Qt main loop.
         self.server_thread = threading.Thread(target=self.server.serve_forever)
@@ -86,6 +108,9 @@ class MindWave:
 
         # event_loop never exit, simulation event loop.
         self.event_loop.join()
+
+    def _get_client(self):
+        return self.client
 
     def event_dispatcher(self):
         try:
@@ -113,11 +138,7 @@ class MindWave:
 
     @catch_exception
     def send_completion_request(self, messages, model="gpt-3.5-turbo"):
-        if openai.api_type == 'azure':
-            response = client.chat.completions.create(engine = model, messages = messages)
-        else:
-            response = client.chat.completions.create(model = model,
-            messages = messages)
+        response = self._get_client().chat.completions.create(model = model, messages = messages)
 
         result = ''
         for choice in response.choices:
@@ -127,18 +148,16 @@ class MindWave:
 
     @catch_exception
     def send_stream_request(self, messages, callback, model="gpt-3.5-turbo"):
-        if openai.api_type == 'azure':
-            response = client.chat.completions.create(engine = model,
-            messages = messages,
-            temperature=0,
-            stream=True)
-        else:
-            response = client.chat.completions.create(model = model,
+        response = self._get_client().chat.completions.create(model = model,
             messages = messages,
             temperature=0,
             stream=True)
 
         for chunk in response:
+            # if not chunk.choices:
+            #     continue
+            # print(chunk.choices[0].delta.content, end="")
+            # callback("start", chunk.choices[0].delta.content)
             (result_type, result_content) = self.get_chunk_result(chunk)
             callback(result_type, result_content)
 
@@ -347,13 +366,7 @@ class MindWave:
                     {"role": "user", "content": f"{prompt}： \n{text}"}]
 
         try:
-            if openai.api_type == 'azure':
-                response = client.chat.completions.create(engine = "gpt-3.5-turbo",
-                messages = messages,
-                temperature=0,
-                stream=True)
-            else:
-                response = client.chat.completions.create(model = "gpt-3.5-turbo",
+            response = self._get_client().chat.completions.create(model = "gpt-3.5-turbo",
                 messages = messages,
                 temperature=0,
                 stream=True)
@@ -368,13 +381,14 @@ class MindWave:
             message_emacs(traceback.format_exc())
 
     def get_chunk_result(self, chunk):
-        delta = chunk.choices[0].delta
+        delta: ChoiceDelta = chunk.choices[0].delta
         if not delta:
             return ("end", "")
-        elif "role" in delta:
+        elif delta.role:
             return ("start", "")
-        elif "content" in delta:
-            return ("content", string_to_base64(delta["content"]))
+        elif delta.content:
+            return ("content", string_to_base64(delta.content))
+        return ("end", "")
 
     def cleanup(self):
         """Do some cleanup before exit python process."""
