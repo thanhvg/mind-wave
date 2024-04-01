@@ -387,7 +387,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
     (define-key map (kbd "C-S-j") #'mind-wave-chat-ask-with-multiline)
     (define-key map (kbd "C-,")   #'mind-wave-chat-ask-insert-line)
     (define-key map (kbd "C-S-m") #'mind-wave-chat-ask-send-buffer)
-    (define-key map (kbd "C-u")   #'mind-wave-chat-continue)
+    (define-key map (kbd "C-c C-c")   #'mind-wave-chat-continue)
     (define-key map (kbd "C-c C-i")   #'mind-wave-chat-generate-title)
     map)
   "Mind Wave Chat Keymap")
@@ -562,8 +562,8 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
                         (string-trim (buffer-substring-no-properties (region-beginning) (region-end)))))
          (mode (replace-regexp-in-string "\\(-ts\\)?-mode$" "" (symbol-name major-mode)))
          (prompt (if (= (length selection) 0)
-                     (format "%s, 只输出代码， 不要带任何解释和说明。" (read-string "Prompt: "))
-                   (format "%s, 只输出代码， 不要带任何解释和说明。" (concat mode " " selection)))))
+                     (format "%s, Only output the code without any explanation or explanation." (read-string "Prompt: "))
+                   (format "%s, Only output the code without any explanation or explanation." (concat mode " " selection)))))
     (insert "\n")
     (mind-wave-call-async "async_text"
                           (buffer-file-name)
@@ -621,7 +621,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
                           translate-start
                           translate-end
                           mind-wave-proofreading-role
-                          (format "Please help me proofread and polish the following text in %s, but do not include 'Here is the revised Chinese paragraph' in the response, do not change the output format, including details such as line breaks." (mind-wave-output-lang))
+                          (format "Please help me proofread and polish the following text in %s, but do not include 'Here is the revised Vietnamese paragraph' in the response, do not change the output format, including details such as line breaks." (mind-wave-output-lang))
                           "Proofread..."
                           "Proofread done"
                           )))
@@ -802,7 +802,7 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
                         "text-mode"
                         (mind-wave--encode-string (nth 2 (mind-wave-get-region-or-buffer)))
                         mind-wave-summary-role
-                        "请检查下面内容的中文错别字。 如果没有错别字就回答 ’没有错别字‘， 如果有错别字， 请用 ```'索引': '错别字' - '修改建议'``` 的格式来回答， 其中 '索引' 是指错别字相对于下面内容的行偏移。"
+                        "Please check the following content for Chinese typos. If there are no typos, answer 'No typos'. If there are typos, please answer in the format of 'index': 'typos' - 'modification suggestions', where 'index' refers to the typo relative to the following content row offset."
                         "typos"
                         "ChatGPT checking..."
                         "ChatGPT check finish."))

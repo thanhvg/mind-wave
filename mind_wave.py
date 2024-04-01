@@ -276,9 +276,9 @@ class MindWave:
     def explain_word(self, buffer_name, major_mode, sentence, word, callback_template, notify_start, notify_end):
         sentence_text = decode_text(sentence)
 
-        messages = [{"role": "system", "content": "你是一位英语词义语法专家， 你在教我英语， 我给你一句英文句子， 和这个句子中的一个单词， 请用中文帮我解释一下，这个单词在句子中的意思和句子本身的意思. 并举几个相同意思的英文例句，并用中文解释例句。如果你明白了请说同意，然后我们开始。"},
-                    {"role": "assistant", "content": "好的，我明白了，请给我这个句子和单词。"},
-                    {"role": "user", "content": f"句子是:{sentence_text}\n 单词是：{word}"}]
+        messages = [{"role": "system", "content": "You are an expert in English word meaning and grammar. You are teaching me English. I will give you an English sentence and a word in this sentence. Please help me explain in Vietnamese the meaning of this word in the sentence and the meaning of the sentence itself .Cite several English examples with the same meaning and explain the examples in Vietnamese. If you understand please say yes and let's get started."},
+                    {"role": "assistant", "content": "Okay, I understand, please give me this sentence and word."},
+                    {"role": "user", "content": f"The sentence is:{sentence_text}\n word is：{word}"}]
 
         def callback(result_type, result_content):
             eval_in_emacs("mind-wave-split-window--response",
