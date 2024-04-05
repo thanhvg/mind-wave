@@ -28,6 +28,7 @@ import pathlib
 import platform
 import sys
 import base64
+import subprocess
 
 from epc.client import EPCClient
 
@@ -134,14 +135,16 @@ def get_emacs_func_result(method_name, *args):
 
 
 def get_command_result(command_string, cwd=None):
-    import subprocess
-    
     process = subprocess.Popen(command_string, cwd=cwd, shell=True, text=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                encoding="utf-8")
-    ret = process.wait()
-    return "".join((process.stdout if ret == 0 else process.stderr).readlines()).strip()    # type: ignore
 
+    stdout, stderr = process.communicate(timeout=10)
+    
+    if process.returncode == 0:
+        return stdout.strip()
+    else:
+        return stderr.strip()
 
 def generate_request_id():
     import random
