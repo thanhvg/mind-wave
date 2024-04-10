@@ -575,6 +575,49 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
                           "Generate..."
                           "Generate code done.")))
 
+
+(defun mind-wave-generate-code-doc ()
+  (interactive)
+  (let* ((info (mind-wave-get-region-or-function))
+         (code-start (nth 0 info))
+         (code-end (nth 1 info))
+         (code-text (nth 2 info))
+         (mode (replace-regexp-in-string "\\(-ts\\)?-mode$" "" (symbol-name major-mode)))
+         (prompt (format "%s, Produce the doc for the following function, method or class, only the doc not code. Don't forget to indent properly."
+                           (concat mode " " code-text))))
+    (insert "\n")
+    (mind-wave-call-async "async_text"
+                          (buffer-file-name)
+                          (mind-wave--encode-string "")
+                          code-start
+                          code-start
+                          mind-wave-code-role
+                          prompt
+                          "Generate..."
+                          "Generate code done.")))
+
+(defun mind-wave-generate-code-doc-2 ()
+  (interactive)
+  (let* ((info (mind-wave-get-region-or-function))
+         (code-start (nth 0 info))
+         (code-end (nth 1 info))
+         (code-text (nth 2 info))
+         (mode (replace-regexp-in-string "\\(-ts\\)?-mode$" "" (symbol-name major-mode)))
+         (prompt (format "Produce the doc for the following %s function(s), method(s) or class.
+Respect the original indentation style. Do not change any indetation or code.
+Only add doc don't change code.
+Reponse the code itself do not surround it with markdown format."
+                           (concat mode " " code-text))))
+    (mind-wave-call-async "async_text"
+                          (buffer-file-name)
+                          (mind-wave--encode-string "")
+                          code-start
+                          code-end
+                          mind-wave-code-role
+                          prompt
+                          "Generate..."
+                          "Generate code done.")))
+
 (defun mind-wave-adjust-text ()
   (interactive)
   (let* ((info (mind-wave-get-region-or-function))
@@ -811,11 +854,14 @@ Then Mind-Wave will start by gdb, please send new issue with `*mind-wave*' buffe
   (interactive)
   (message "Git commit name generating...")
   (mind-wave-call-async "git_commit"
-                        default-directory
+                        (if-let (prj (project-current))
+                            (project-root prj)
+                          default-directory)
                         mind-wave-code-role
                         "Please generate a patch title for the following diff content, mainly analyze the content starting with - or + at the beginning of the line, with a concise and informative summary instead of a mechanical list. The title should not exceed 100 characters in length, and the format of the words in the title should be: the first word capitalized, all other words lowercase, unless they are proper nouns, if the diff content starts with 'Subproject commit', you extract the submodule name 'xxx', and reply 'Update xxx modules'."))
 
 (defun mind-wave-generate-commit-name--response (patch-name)
+  (message "Got it: %s" patch-name)
   (when (and (active-minibuffer-window)
              (= (length (minibuffer-contents)) 0))
     (insert patch-name)))
